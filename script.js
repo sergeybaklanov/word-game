@@ -49,7 +49,7 @@ const words = [
     { english: "Capability", translation: "Возможность" },
     { english: "Omits", translation: "Пропускает" },
     { english: "Statement", translation: "Оператор" },
-    { english: "Whether", translation: "Ли" },
+    { english: "Whether or", translation: "Или" },
     { english: "Obtain", translation: "Получать" },
     { english: "Matter", translation: "Дело" },
     { english: "Overall", translation: "В целом" },
@@ -64,7 +64,27 @@ const words = [
     { english: "Perspective", translation: "Перспектива" },
     { english: "Straightforward", translation: "Простой" },
     { english: "Assume", translation: "Предполагать" },
-    { english: "Generic", translation: "Обобщённый" }
+    { english: "Generic", translation: "Обобщённый" },
+    { english: "Arguably", translation: "Возможно"},
+    { english: "Designated", translation: "Назначенный"},
+    { english: "Vulnerability", translation: "Уязвимость"},
+    { english: "Assess", translation: "Оценивать"},
+    { english: "Alter", translation: "Изменить"},
+    { english: "Violation", translation: "Нарушение"},
+    { english: "Regardless", translation: "Несмотря ни на что"},
+    { english: "Intermingle", translation: "Смешиваться"},
+    { english: "Tricky", translation: "Хитрый"},
+    { english: "Agile", translation: "Гибкий"},
+    { english: "Dedicate", translation: "Посвятить"},
+    { english: "Disposable", translation: "Одноразовый"},
+    { english: "Emphasize", translation: "Подчеркнуть"},
+    { english: "Consequences", translation: "Последствия"},
+    { english: "Persist", translation: "Сохранить"},
+    { english: "In charge", translation: "Ответсвенный"},
+    { english: "Expose", translation: "Раскрыть"},
+    { english: "Expose", translation: "Раскрыть"},
+    { english: "Efforts", translation: "Усилия"},
+    { english: "Beforehead", translation: "Наперед"},
 ];
 
 let remainingWords = [...words];
@@ -123,6 +143,11 @@ function selectTranslation(element, word) {
     element.classList.add('selected');
     selectedTranslation = word;
     checkMatch();
+}
+
+function selectCorrectTranslation(word){
+    clearSelections('translatedWords');
+    
 }
 
 function checkMatch() {
