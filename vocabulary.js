@@ -88,6 +88,16 @@ const words = [
 	{ english: "Drives", translation: "Сприяє", sentence: "Innovation _____ progress in the technology industry." },
 	{ english: "Eager", translation: "Нетерплячий", sentence: "She is _____ to start her new job next week." },
 	{ english: "Reconciliation ", translation: "Погодження, примирення, улагодження", sentence: " _____ of duplicate data between the two systems" },
+	{ english: "Incorporate", translation: "Включать, внедрять", sentence: "We plan to _____ user feedback into the next update." },
+	{ english: "Scope", translation: "Область, масштаб", sentence: "The variable is only accessible within the function’s _____." },
+	{ english: "Within", translation: "В пределах", sentence: "All tasks must be completed _____ the given timeframe." },
+	{ english: "Rather", translation: "Скорее", sentence: "I’d _____ refactor the code than write it from scratch." },
+	{ english: "Tackle", translation: "Решать, справляться", sentence: "We need to _____ this issue before the release." },
+	{ english: "Mandatory", translation: "Обязательный", sentence: "Providing a password is _____ for registration." },
+	{ english: "Dedicated", translation: "Посвящённый, выделенный", sentence: "She works on a _____ team focused on optimization." },
+	{ english: "Nested", translation: "Вложенный", sentence: "The function contains several _____ loops." },
+	{ english: "Generic", translation: "Обобщённый", sentence: "We used a _____ type to handle multiple data formats." },
+	{ english: "Perform", translation: "Выполнять", sentence: "The script can _____ several automated tasks." },
 ];
 //Infinitives only with to
 const infinitives = [
