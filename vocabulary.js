@@ -171,9 +171,9 @@ const gerund = [
 
 
 const vocabulary = {
-	'workWords': words,
-	'infinitives': infinitives,
-	'gerund' : gerund,
+	words,
+	infinitives,
+	gerund,
 }
 
 export default vocabulary;
