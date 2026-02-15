@@ -167,6 +167,147 @@ const gerund = [
     { english: "Keep", translation: "Продовжувати", sentence: "He _____ working despite being tired." }
 ];
 
+const transitionWords = [
+    // Addition
+    { english: "In addition", translation: "На додаток", sentence: "She speaks French. _____, she also knows Spanish." },
+    { english: "Further", translation: "Далі, крім того", sentence: "_____, we need to discuss the budget for next year." },
+    { english: "And then", translation: "І потім", sentence: "We went shopping, _____ we had lunch together." },
+    { english: "Another", translation: "Інший, ще один", sentence: "_____ reason to exercise regularly is better sleep quality." },
+    { english: "Also", translation: "Також", sentence: "She plays the piano. She _____ plays the violin." },
+    { english: "As well as", translation: "А також", sentence: "He speaks English _____ German fluently." },
+    { english: "Besides", translation: "Крім того, окрім", sentence: "_____ work, I have many hobbies to enjoy." },
+    { english: "Furthermore", translation: "Більш того", sentence: "The product is high quality. _____, it's affordable." },
+
+    // Compare
+    { english: "In comparison", translation: "У порівнянні", sentence: "_____ to last year, sales have increased significantly." },
+    { english: "Just as", translation: "Так само як", sentence: "_____ the sun rises, it also sets every day." },
+    { english: "Similarly", translation: "Подібно, аналогічно", sentence: "Paris has many museums. _____, London offers great cultural attractions." },
+    { english: "Likewise", translation: "Так само, подібно", sentence: "I enjoy reading mystery novels. _____, my sister does too." },
+    { english: "On the contrary", translation: "Навпаки", sentence: "He's not lazy. _____, he's very hardworking." },
+    { english: "Instead of", translation: "Замість", sentence: "I'll have tea _____ coffee this morning." },
+    { english: "Unlike", translation: "На відміну від", sentence: "_____ cats, dogs need regular walks outside." },
+    { english: "On the other hand", translation: "З іншого боку", sentence: "The apartment is expensive. _____, it's in a great location." },
+
+    // Emphasis
+    { english: "In particular", translation: "Зокрема", sentence: "I love fruits, _____ fresh strawberries and mangoes." },
+    { english: "Importantly", translation: "Важливо", sentence: "_____, we must finish the project on time." },
+    { english: "In fact", translation: "Насправді", sentence: "_____, I've visited that museum twice before." },
+    { english: "Especially", translation: "Особливо", sentence: "I love all animals, _____ dogs and cats." },
+    { english: "Above all", translation: "Перш за все", sentence: "_____, safety must be our top priority." },
+    { english: "Significantly", translation: "Значно", sentence: "_____, sales have increased by 30% this quarter." },
+    { english: "Even", translation: "Навіть", sentence: "_____ young children can understand this concept easily." },
+    { english: "Without a doubt", translation: "Без сумніву", sentence: "_____, she's the best candidate for this position." },
+
+    // Contrast
+    { english: "In contrast to", translation: "На відміну від", sentence: "_____ yesterday's weather, today is sunny and warm." },
+    { english: "In spite of", translation: "Незважаючи на", sentence: "_____ the rain, we went hiking in the mountains." },
+    { english: "Alternatively", translation: "Альтернативно", sentence: "You can drive there. _____, you could take the train." },
+    { english: "Despite", translation: "Незважаючи на", sentence: "_____ many difficulties, we succeeded in our mission." },
+    { english: "Whereas", translation: "Тоді як", sentence: "I prefer coffee, _____ my sister prefers tea." },
+    { english: "Although", translation: "Хоча", sentence: "_____ I was tired, I finished all my work." },
+    { english: "But", translation: "Але", sentence: "I wanted to go to the party, _____ it was too late." },
+    { english: "However", translation: "Однак", sentence: "The house is small. _____, it's very cozy and comfortable." },
+
+    // Conclusion
+    { english: "To conclude", translation: "На завершення", sentence: "_____, we need more research before making a decision." },
+    { english: "In brief", translation: "Коротко кажучи", sentence: "_____, the project was completed successfully and on time." },
+    { english: "As shown above", translation: "Як показано вище", sentence: "_____, the results have improved significantly this year." },
+    { english: "So", translation: "Отже", sentence: "It's getting late, _____ we should leave now." },
+    { english: "Therefore", translation: "Тому", sentence: "The strategy isn't working. _____, we need a new approach." },
+    { english: "On the whole", translation: "В цілому", sentence: "_____, it was a very positive and productive experience." },
+    { english: "To sum up", translation: "Підсумовуючи", sentence: "_____, three key points emerged from our discussion." },
+    { english: "Overall", translation: "Загалом", sentence: "_____, the event was a great success for everyone." },
+
+    // Example
+    { english: "For example", translation: "Наприклад", sentence: "Many European cities are beautiful, _____, Paris and Rome." },
+    { english: "For instance", translation: "Наприклад", sentence: "Some fruits, _____ apples and oranges, are very healthy." },
+    { english: "Such as", translation: "Такі як", sentence: "I enjoy outdoor sports _____ tennis and swimming." },
+    { english: "To illustrate", translation: "Щоб проілюструвати", sentence: "_____ this point, let me share a personal story." },
+    { english: "Like", translation: "Як, наприклад", sentence: "Citrus fruits _____ oranges are rich in vitamin C." },
+    { english: "As a sample", translation: "Як зразок", sentence: "_____, look at this data from last quarter." },
+    { english: "As revealed by", translation: "Як показано", sentence: "_____ recent research, exercise improves mental health." },
+    { english: "To exemplify", translation: "Щоб проілюструвати", sentence: "_____, here's a detailed case study from our work." },
+
+    // Condition
+    { english: "If", translation: "Якщо", sentence: "_____ it rains tomorrow, we'll stay home." },
+    { english: "Unless", translation: "Якщо не", sentence: "_____ you hurry, we'll be late for the meeting." },
+    { english: "Even if", translation: "Навіть якщо", sentence: "_____ it's difficult, I'll try my best." },
+    { english: "Only if", translation: "Тільки якщо", sentence: "I'll attend the party _____ you come with me." },
+    { english: "Because of", translation: "Через, завдяки", sentence: "We had to cancel the trip _____ bad weather." },
+    { english: "While", translation: "Поки, в той час як", sentence: "_____ I cook dinner, you can set the table." },
+    { english: "Except if", translation: "Крім випадків коли", sentence: "I work every day, _____ I'm sick." },
+    { english: "In that case", translation: "В такому випадку", sentence: "You're feeling tired? _____, you should rest more." },
+
+    // Sequence
+    { english: "First/Firstly", translation: "По-перше", sentence: "_____, we need to create a detailed plan." },
+    { english: "Second", translation: "По-друге", sentence: "_____, we must gather all necessary resources." },
+    { english: "Afterward", translation: "Потім, після того", sentence: "We had dinner. _____, we watched a movie together." },
+    { english: "Initially", translation: "Спочатку", sentence: "_____, the idea seemed completely impossible to achieve." },
+    { english: "Before", translation: "Перед тим, раніше", sentence: "_____ leaving the house, always check the windows." },
+    { english: "Previously", translation: "Раніше", sentence: "_____, we used a completely different method for this." },
+    { english: "Finally", translation: "Нарешті", sentence: "_____, after hours of driving, we reached our destination." },
+    { english: "Subsequently", translation: "Згодом", sentence: "_____, new evidence appeared that changed everything." },
+
+    // Reason
+    { english: "For", translation: "Оскільки", sentence: "I stayed home yesterday, _____ I was feeling sick." },
+    { english: "Due to", translation: "Через", sentence: "The flight was canceled _____ heavy fog." },
+    { english: "In order to", translation: "Для того щоб", sentence: "_____ succeed in life, you must work hard." },
+    { english: "So that", translation: "Щоб", sentence: "I'm saving money _____ I can travel next summer." },
+    { english: "With the aim of", translation: "З метою", sentence: "_____ improving my skills, I practice every day." },
+    { english: "For this reason", translation: "З цієї причини", sentence: "_____, we decided to change our plans completely." },
+    { english: "Owing to", translation: "Завдяки, через", sentence: "_____ heavy rain, the soccer match was postponed." },
+    { english: "Because", translation: "Тому що", sentence: "I'm very happy _____ I passed my final exam." },
+
+    // Clarification
+    { english: "I mean", translation: "Я маю на увазі", sentence: "_____, it's really not that difficult to understand." },
+    { english: "To simplify", translation: "Щоб спростити", sentence: "_____, just follow these three simple steps carefully." },
+    { english: "To be clear", translation: "Щоб було зрозуміло", sentence: "_____, I'm not angry with you at all." },
+    { english: "Let me explain", translation: "Дозвольте пояснити", sentence: "_____ what actually happened during the meeting yesterday." },
+    { english: "More precisely", translation: "Точніше", sentence: "_____, the incident happened at exactly noon today." },
+    { english: "In other words", translation: "Іншими словами", sentence: "_____, we simply need more time to finish." },
+    { english: "In explanation", translation: "У поясненні", sentence: "_____, the process is actually quite simple to follow." },
+    { english: "To clearly define", translation: "Щоб чітко визначити", sentence: "_____ our goals, we need to meet tomorrow." },
+
+    // Result
+    { english: "As a result", translation: "Як результат", sentence: "_____, company sales increased by 20% this year." },
+    { english: "Thus", translation: "Таким чином", sentence: "_____, we successfully solved the difficult problem together." },
+    { english: "Hence", translation: "Звідси, отже", sentence: "_____, we need to develop a completely new approach." },
+    { english: "Eventually", translation: "Зрештою", sentence: "_____, they reached an agreement after long negotiations." },
+    { english: "Accordingly", translation: "Відповідно", sentence: "_____, we adjusted our plans to fit the situation." },
+    { english: "Consequently", translation: "Отже, внаслідок", sentence: "_____, prices went up dramatically across the board." },
+    { english: "Such that", translation: "Таким чином що", sentence: "The plan was designed _____ everyone would benefit." },
+    { english: "Therefore", translation: "Тому", sentence: "The situation is urgent. _____, we must act immediately." },
+
+    // Time Order
+    { english: "In the beginning", translation: "На початку", sentence: "_____, learning English was very difficult for me." },
+    { english: "Then", translation: "Потім", sentence: "First we had breakfast, _____ we left for work." },
+    { english: "Later", translation: "Пізніше", sentence: "_____, we realized we had made a mistake." },
+    { english: "Meanwhile", translation: "Тим часом", sentence: "_____, the other team members were working hard." },
+    { english: "At the same time", translation: "Водночас", sentence: "_____, housing prices were increasing rapidly too." },
+    { english: "During", translation: "Під час", sentence: "_____ the summer months, we travel very often." },
+    { english: "Before", translation: "Перед", sentence: "_____ the important meeting, please read this report." },
+    { english: "After", translation: "Після", sentence: "_____ lunch is finished, we'll continue our work." },
+
+    // Restatement
+    { english: "In short", translation: "Коротко кажучи", sentence: "_____, we simply need more time to complete this." },
+    { english: "To rephrase", translation: "Перефразовуючи", sentence: "_____, the current situation is actually quite serious." },
+    { english: "In a nutshell", translation: "Коротко, в двох словах", sentence: "_____, the entire project failed to meet expectations." },
+    { english: "In simple terms", translation: "Простими словами", sentence: "_____, it's all about clear and honest communication." },
+    { english: "Expressed simply", translation: "Простими словами", sentence: "_____, we're significantly behind our original schedule." },
+    { english: "That is to say", translation: "Тобто", sentence: "_____, we must start the project over from scratch." },
+    { english: "Otherwise", translation: "Інакше", sentence: "We need to hurry, _____ we'll miss the bus." },
+
+    // Choice
+    { english: "Either...or", translation: "Або...або", sentence: "You can _____ stay home _____ come with us." },
+    { english: "Whether...or", translation: "Чи...чи", sentence: "_____ you agree _____ not, I'll do it anyway." },
+    { english: "Alternatively", translation: "Альтернативно", sentence: "Take the bus to work. _____, you can walk there." },
+    { english: "Or", translation: "Або", sentence: "Would you like coffee _____ tea this morning?" },
+    { english: "Rather", translation: "Скоріше", sentence: "I'd _____ stay home tonight than go out." },
+    { english: "Choose either", translation: "Обирай будь-який", sentence: "_____ option A or option B for your answer." },
+    { english: "Preferably...or", translation: "Бажано...або", sentence: "Come on Monday, _____, _____ come on Tuesday instead." },
+    { english: "In either case", translation: "В будь-якому випадку", sentence: "_____, we must make a decision very soon." }
+];
+
 
 
 
@@ -174,6 +315,7 @@ const vocabulary = {
 	words,
 	infinitives,
 	gerund,
+	transitionWords,
 }
 
 export default vocabulary;
