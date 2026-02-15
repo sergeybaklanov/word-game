@@ -13,6 +13,8 @@ let sentenceGameMode = false;
 
 const toggleSwitch = document.getElementById('toggleSwitch');
 const dropdownContent = document.getElementById('dropdownContent');
+const wordsCountEl = document.getElementById('wordsInTheList');
+const wordsLeftEl = document.getElementById('wordsLeft');
 
 toggleSwitch.addEventListener('change', () => {
     console.log('Toggle switch changed: ' + toggleSwitch.checked);
@@ -26,7 +28,8 @@ dropdownContent.addEventListener('click', (event) => {
         const selectedOption = event.target.textContent;
         remainingWords = [...vocabulary[selectedOption]];
     }
-     loadWords();
+    loadWords();
+    fillWordsCount();
 });
 
 
@@ -65,6 +68,16 @@ function loadWords() {
         translationLi.addEventListener('click', () => selectTranslation(translationLi, pair));
         translationList.appendChild(translationLi);
     });
+
+}
+
+function fillWordsCount() {
+    wordsCountEl.textContent = `Words in the list: ${remainingWords.length}`;
+    wordsLeftEl.textContent = `Words left: ${remainingWords.length}`;
+}
+
+function changeCounter() {
+    wordsLeftEl.textContent = `Words left: ${remainingWords.length}`;
 }
 
 function getRandomWords(count, wordList) {
@@ -106,12 +119,12 @@ function checkMatch() {
             remainingWords = remainingWords.filter(
                 word => word.english !== selectedEnglish.english
             );
-
             setTimeout(() => {
                 englishElement.remove();
                 translationElement.remove();
-
+                
                 loadWords();
+                changeCounter();
             }, 1000);
         } else {
             englishElement.classList.add('wrong');
@@ -134,7 +147,7 @@ function clearSelections(columnId) {
 }
 
 function addOptionsToDropdown() {
-    for(const key in vocabulary) {
+    for (const key in vocabulary) {
         console.log('Adding option: ' + key);
         const option = document.createElement('a');
         option.href = '#';
