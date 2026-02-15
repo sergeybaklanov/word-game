@@ -8,19 +8,36 @@ const words2 = [
 let remainingWords = [...vocabulary.words];
 let selectedEnglish = null;
 let selectedTranslation = null;
+let selectedSentence = [];
 
 let sentenceGameMode = false;
 
 const toggleSwitch = document.getElementById('toggleSwitch');
+const dropdownContent = document.getElementById('dropdownContent');
 
 toggleSwitch.addEventListener('change', () => {
+    console.log('Toggle switch changed: ' + toggleSwitch.checked);
     sentenceGameMode = toggleSwitch.checked;
     loadWords();
 });
 
+dropdownContent.addEventListener('click', (event) => {
+    if (event.target.tagName === 'A') {
+        console.log('Selected option: ' + event.target.textContent);
+        const selectedOption = event.target.textContent;
+        selectedSentence = vocabulary[selectedOption];
+    }
+     loadWords();
+});
+
+
+function initComponents() {
+    addOptionsToDropdown();
+}
+
 function loadWords() {
     console.log('Importing words:');
-    console.log('Load words: ' + vocabulary.words);
+    console.log('Load words: ' + selectedSentence);
     const englishList = document.getElementById('englishWords');
     const translationList = document.getElementById('translatedWords');
     englishList.innerHTML = '';
@@ -37,7 +54,7 @@ function loadWords() {
     // Add English words
     selectedPairs.forEach(pair => {
         const englishLi = document.createElement('li');
-        englishLi.textContent = sentenceGameMode ? pair.english +' (' + pair.translation + ')' : pair.english;
+        englishLi.textContent = sentenceGameMode ? pair.english + ' (' + pair.translation + ')' : pair.english;
         englishLi.addEventListener('click', () => selectEnglish(englishLi, pair));
         englishList.appendChild(englishLi);
     });
@@ -74,16 +91,16 @@ function selectTranslation(element, word) {
     checkMatch();
 }
 
-function selectCorrectTranslation(word){
+function selectCorrectTranslation(word) {
     clearSelections('translatedWords');
-    
+
 }
 
 function checkMatch() {
     if (selectedEnglish && selectedTranslation) {
         const englishElement = document.querySelector('.left .selected');
         const translationElement = document.querySelector('.right .selected');
-        
+
         if (selectedEnglish.english === selectedTranslation.english) {
             englishElement.classList.add('correct');
             translationElement.classList.add('correct');
@@ -118,4 +135,15 @@ function clearSelections(columnId) {
     });
 }
 
-loadWords();
+function addOptionsToDropdown() {
+    for(const key in vocabulary) {
+        console.log('Adding option: ' + key);
+        const option = document.createElement('a');
+        option.href = '#';
+        option.textContent = key;
+        dropdownContent.appendChild(option);
+    }
+}
+
+initComponents();
+
