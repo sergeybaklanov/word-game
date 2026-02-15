@@ -5,10 +5,9 @@ const words2 = [
 
 ]
 
-let remainingWords = [...vocabulary.words];
+let remainingWords = [];
 let selectedEnglish = null;
 let selectedTranslation = null;
-let selectedSentence = [];
 
 let sentenceGameMode = false;
 
@@ -25,7 +24,7 @@ dropdownContent.addEventListener('click', (event) => {
     if (event.target.tagName === 'A') {
         console.log('Selected option: ' + event.target.textContent);
         const selectedOption = event.target.textContent;
-        selectedSentence = vocabulary[selectedOption];
+        remainingWords = [...vocabulary[selectedOption]];
     }
      loadWords();
 });
@@ -37,7 +36,6 @@ function initComponents() {
 
 function loadWords() {
     console.log('Importing words:');
-    console.log('Load words: ' + selectedSentence);
     const englishList = document.getElementById('englishWords');
     const translationList = document.getElementById('translatedWords');
     englishList.innerHTML = '';
