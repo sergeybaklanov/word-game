@@ -45,16 +45,18 @@ function loadWords() {
     const pool = buildPool(currentCategoryKey);
     const selectedPairs = srs.pickSessionWords(pool, SESSION_SIZE);
 
-    selectedPairs.forEach(pair => {
+    selectedPairs.forEach((pair, index) => {
         const li = document.createElement('li');
         li.textContent = sentenceGameMode ? `${pair.english} (${pair.translation})` : pair.english;
+        li.style.gridRow = index + 1;
         li.addEventListener('click', () => selectEnglish(li, pair));
         englishListEl.appendChild(li);
     });
 
-    shuffle([...selectedPairs]).forEach(pair => {
+    shuffle([...selectedPairs]).forEach((pair, index) => {
         const li = document.createElement('li');
         li.textContent = sentenceGameMode ? pair.sentence : pair.translation;
+        li.style.gridRow = index + 1;
         li.addEventListener('click', () => selectTranslation(li, pair));
         translationListEl.appendChild(li);
     });
