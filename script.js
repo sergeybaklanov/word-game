@@ -1,5 +1,6 @@
 import vocabulary, { categoryLabels } from './vocabulary.js';
 import grammarTopics from './grammar.js';
+import grammarB2Topics from './grammar-b2.js';
 import * as srs from './srs.js';
 
 const SESSION_SIZE = 5;
@@ -184,93 +185,206 @@ function applyTheme(theme) {
     themeToggleEl.textContent = theme === 'dark' ? '☀️' : '🌙';
 }
 
+function normalizeAnswer(str) {
+    return str.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,!?;:]+$/, '');
+}
+
+function isCorrectAnswer(input, answer) {
+    const accepted = answer.split('/').map(normalizeAnswer);
+    return accepted.includes(normalizeAnswer(input));
+}
+
+function checkExercise(item, input, feedback, answer) {
+    const correct = isCorrectAnswer(input.value, answer);
+    item.classList.remove('exercise-correct', 'exercise-wrong');
+    item.classList.add(correct ? 'exercise-correct' : 'exercise-wrong');
+    feedback.textContent = correct ? '✓ Правильно' : `✗ Правильна відповідь: ${answer.split('/')[0].trim()}`;
+    return correct;
+}
+
+function buildExerciseBlock(exercises) {
+    const wrap = document.createElement('div');
+    wrap.className = 'exercise-block';
+
+    const heading = document.createElement('div');
+    heading.className = 'exercise-heading';
+    heading.textContent = 'Практичні вправи';
+    wrap.appendChild(heading);
+
+    const checkers = exercises.map(ex => {
+        const item = document.createElement('div');
+        item.className = 'exercise-item';
+
+        const sentenceEl = document.createElement('div');
+        sentenceEl.className = 'exercise-sentence';
+        const [before, after] = ex.sentence.split('____');
+        sentenceEl.appendChild(document.createTextNode(before));
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'exercise-input';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        sentenceEl.appendChild(input);
+        sentenceEl.appendChild(document.createTextNode(after ?? ''));
+        item.appendChild(sentenceEl);
+
+        if (ex.hint) {
+            const hintEl = document.createElement('div');
+            hintEl.className = 'exercise-hint';
+            hintEl.textContent = `💡 ${ex.hint}`;
+            item.appendChild(hintEl);
+        }
+
+        const feedback = document.createElement('div');
+        feedback.className = 'exercise-feedback';
+        item.appendChild(feedback);
+
+        const runCheck = () => checkExercise(item, input, feedback, ex.answer);
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') runCheck();
+        });
+
+        wrap.appendChild(item);
+        return runCheck;
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'exercise-actions';
+
+    const checkBtn = document.createElement('button');
+    checkBtn.type = 'button';
+    checkBtn.className = 'exercise-check-btn';
+    checkBtn.textContent = 'Перевірити всі';
+
+    const scoreEl = document.createElement('span');
+    scoreEl.className = 'exercise-score';
+
+    checkBtn.addEventListener('click', () => {
+        const correctCount = checkers.filter(runCheck => runCheck()).length;
+        scoreEl.textContent = `${correctCount} / ${checkers.length} правильно`;
+    });
+
+    actions.appendChild(checkBtn);
+    actions.appendChild(scoreEl);
+    wrap.appendChild(actions);
+
+    return wrap;
+}
+
+function buildGrammarCard(topic) {
+    const card = document.createElement('details');
+    card.className = 'grammar-card';
+
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span class="grammar-icon">${topic.icon || '📘'}</span><span>${topic.title}</span>`;
+    card.appendChild(summary);
+
+    const body = document.createElement('div');
+    body.className = 'grammar-body';
+
+    const p = document.createElement('p');
+    p.className = 'grammar-summary';
+    p.textContent = topic.summary;
+    body.appendChild(p);
+
+    if (topic.rules?.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'grammar-rules';
+        topic.rules.forEach(rule => {
+            const li = document.createElement('li');
+            li.textContent = rule;
+            ul.appendChild(li);
+        });
+        body.appendChild(ul);
+    }
+
+    if (topic.groups?.length) {
+        const grid = document.createElement('div');
+        grid.className = 'grammar-groups';
+        topic.groups.forEach(group => {
+            const item = document.createElement('div');
+            item.className = 'grammar-group';
+            item.innerHTML = `<strong>${group.name}</strong><span class="grammar-group-words">${group.words}</span><em class="grammar-group-example">${group.example}</em>`;
+            grid.appendChild(item);
+        });
+        body.appendChild(grid);
+    }
+
+    if (topic.examples?.length) {
+        const exWrap = document.createElement('div');
+        exWrap.className = 'grammar-examples';
+        topic.examples.forEach(ex => {
+            const exEl = document.createElement('div');
+            exEl.className = 'grammar-example';
+            exEl.innerHTML = `<span class="ex-en">${ex.en}</span><span class="ex-uk">${ex.uk}</span>`;
+            exWrap.appendChild(exEl);
+        });
+        body.appendChild(exWrap);
+    }
+
+    if (topic.note) {
+        const note = document.createElement('div');
+        note.className = 'grammar-note';
+        const noteTitle = document.createElement('strong');
+        noteTitle.textContent = topic.note.title;
+        note.appendChild(noteTitle);
+        const noteList = document.createElement('ul');
+        topic.note.items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            noteList.appendChild(li);
+        });
+        note.appendChild(noteList);
+        body.appendChild(note);
+    }
+
+    if (topic.exercises?.length) {
+        body.appendChild(buildExerciseBlock(topic.exercises));
+    }
+
+    if (topic.category) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'grammar-practice-btn';
+        btn.textContent = 'Практикувати ці слова →';
+        btn.addEventListener('click', () => {
+            currentCategoryKey = topic.category;
+            renderCategoryChips();
+            loadWords();
+            switchTab('practice');
+        });
+        body.appendChild(btn);
+    }
+
+    if (topic.refPage) {
+        const link = document.createElement('a');
+        link.className = 'grammar-ref-link';
+        link.href = `grammar-b2/${topic.refPage}`;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'Докладніше: формули й таймлайни →';
+        body.appendChild(link);
+    }
+
+    card.appendChild(body);
+    return card;
+}
+
 function renderGrammar() {
     grammarListEl.innerHTML = '';
 
-    grammarTopics.forEach(topic => {
-        const card = document.createElement('details');
-        card.className = 'grammar-card';
+    const addGroupHeading = text => {
+        const heading = document.createElement('div');
+        heading.className = 'grammar-group-heading';
+        heading.textContent = text;
+        grammarListEl.appendChild(heading);
+    };
 
-        const summary = document.createElement('summary');
-        summary.innerHTML = `<span class="grammar-icon">${topic.icon || '📘'}</span><span>${topic.title}</span>`;
-        card.appendChild(summary);
+    addGroupHeading('Лексика та основи');
+    grammarTopics.forEach(topic => grammarListEl.appendChild(buildGrammarCard(topic)));
 
-        const body = document.createElement('div');
-        body.className = 'grammar-body';
-
-        const p = document.createElement('p');
-        p.className = 'grammar-summary';
-        p.textContent = topic.summary;
-        body.appendChild(p);
-
-        if (topic.rules?.length) {
-            const ul = document.createElement('ul');
-            ul.className = 'grammar-rules';
-            topic.rules.forEach(rule => {
-                const li = document.createElement('li');
-                li.textContent = rule;
-                ul.appendChild(li);
-            });
-            body.appendChild(ul);
-        }
-
-        if (topic.groups?.length) {
-            const grid = document.createElement('div');
-            grid.className = 'grammar-groups';
-            topic.groups.forEach(group => {
-                const item = document.createElement('div');
-                item.className = 'grammar-group';
-                item.innerHTML = `<strong>${group.name}</strong><span class="grammar-group-words">${group.words}</span><em class="grammar-group-example">${group.example}</em>`;
-                grid.appendChild(item);
-            });
-            body.appendChild(grid);
-        }
-
-        if (topic.examples?.length) {
-            const exWrap = document.createElement('div');
-            exWrap.className = 'grammar-examples';
-            topic.examples.forEach(ex => {
-                const exEl = document.createElement('div');
-                exEl.className = 'grammar-example';
-                exEl.innerHTML = `<span class="ex-en">${ex.en}</span><span class="ex-uk">${ex.uk}</span>`;
-                exWrap.appendChild(exEl);
-            });
-            body.appendChild(exWrap);
-        }
-
-        if (topic.note) {
-            const note = document.createElement('div');
-            note.className = 'grammar-note';
-            const noteTitle = document.createElement('strong');
-            noteTitle.textContent = topic.note.title;
-            note.appendChild(noteTitle);
-            const noteList = document.createElement('ul');
-            topic.note.items.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item;
-                noteList.appendChild(li);
-            });
-            note.appendChild(noteList);
-            body.appendChild(note);
-        }
-
-        if (topic.category) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'grammar-practice-btn';
-            btn.textContent = 'Практикувати ці слова →';
-            btn.addEventListener('click', () => {
-                currentCategoryKey = topic.category;
-                renderCategoryChips();
-                loadWords();
-                switchTab('practice');
-            });
-            body.appendChild(btn);
-        }
-
-        card.appendChild(body);
-        grammarListEl.appendChild(card);
-    });
+    addGroupHeading('Граматика B2');
+    grammarB2Topics.forEach(topic => grammarListEl.appendChild(buildGrammarCard(topic)));
 }
 
 function pluralDays(n) {
