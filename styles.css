@@ -107,7 +107,7 @@ body {
 
 .tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
     padding: 6px;
     background: var(--bg-elevated);
@@ -655,6 +655,118 @@ li.wrong {
     font-weight: 700;
 }
 
+.plan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.plan-summary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    color: #fff;
+}
+
+.plan-summary-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 10px;
+}
+
+.plan-summary .progress-bar {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.plan-summary .progress-bar-fill {
+    background: #fff;
+}
+
+.plan-summary-meta {
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.plan-day {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 14px 18px;
+}
+
+.plan-day.plan-day-done {
+    border-color: var(--success);
+}
+
+.plan-day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.plan-day-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.plan-day-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--success);
+    cursor: pointer;
+}
+
+.plan-day-number {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+}
+
+.plan-day-done .plan-day-number {
+    color: var(--success);
+}
+
+.plan-day-title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.plan-day-focus {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.plan-day-tasks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.plan-task-btn {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.plan-task-btn:hover {
+    border-color: var(--primary);
+}
+
 @media (max-width: 420px) {
     .brand-name {
         font-size: 18px;
@@ -667,5 +779,10 @@ li.wrong {
 
     .grammar-card {
         padding: 2px 14px;
+    }
+
+    .tab {
+        font-size: 12px;
+        padding: 10px 2px;
     }
 }

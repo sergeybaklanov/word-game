@@ -1,10 +1,12 @@
 import vocabulary, { categoryLabels } from './vocabulary.js';
 import grammarTopics from './grammar.js';
 import grammarB2Topics from './grammar-b2.js';
+import studyPlan from './plan.js';
 import * as srs from './srs.js';
 
 const SESSION_SIZE = 5;
 const THEME_KEY = 'wordGameTheme';
+const PLAN_PROGRESS_KEY = 'wordGamePlanProgress.v1';
 const CATEGORY_ORDER = ['mixed', ...Object.keys(vocabulary)];
 const categoryChipLabels = { mixed: 'Змішано (усі теми)', ...categoryLabels };
 
@@ -25,6 +27,7 @@ const streakCountEl = document.getElementById('streakCount');
 const themeToggleEl = document.getElementById('themeToggle');
 const grammarListEl = document.getElementById('grammarList');
 const progressListEl = document.getElementById('progressList');
+const planListEl = document.getElementById('planList');
 
 function buildPool(key) {
     if (key === 'mixed') {
@@ -160,6 +163,7 @@ function switchTab(name) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
     document.querySelectorAll('.view').forEach(view => view.classList.toggle('hidden', view.id !== `view-${name}`));
     if (name === 'progress') renderProgress();
+    if (name === 'plan') renderPlan();
 }
 
 function wireTabs() {
@@ -274,6 +278,7 @@ function buildExerciseBlock(exercises) {
 function buildGrammarCard(topic) {
     const card = document.createElement('details');
     card.className = 'grammar-card';
+    if (topic.id) card.dataset.topicId = topic.id;
 
     const summary = document.createElement('summary');
     summary.innerHTML = `<span class="grammar-icon">${topic.icon || '📘'}</span><span>${topic.title}</span>`;
@@ -423,6 +428,118 @@ function renderProgress() {
             </div>
         `;
         progressListEl.appendChild(card);
+    });
+}
+
+function loadPlanProgress() {
+    try {
+        return JSON.parse(localStorage.getItem(PLAN_PROGRESS_KEY)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function savePlanProgress(progress) {
+    try {
+        localStorage.setItem(PLAN_PROGRESS_KEY, JSON.stringify(progress));
+    } catch {
+        // localStorage unavailable - progress just won't persist
+    }
+}
+
+function goToPlanTask(task) {
+    if (task.type === 'practice') {
+        currentCategoryKey = task.categoryKey;
+        renderCategoryChips();
+        loadWords();
+        switchTab('practice');
+    } else if (task.type === 'grammar') {
+        switchTab('grammar');
+        requestAnimationFrame(() => {
+            const card = grammarListEl.querySelector(`[data-topic-id="${task.topicId}"]`);
+            if (card) {
+                card.open = true;
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    } else if (task.type === 'tab') {
+        switchTab(task.target);
+    }
+}
+
+function renderPlan() {
+    planListEl.innerHTML = '';
+
+    const progress = loadPlanProgress();
+    const doneCount = studyPlan.filter(d => progress[d.day]).length;
+    const percent = Math.round((doneCount / studyPlan.length) * 100);
+
+    const summary = document.createElement('div');
+    summary.className = 'plan-summary';
+    summary.innerHTML = `
+        <div class="plan-summary-title">План на 15 днів</div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${percent}%"></div></div>
+        <div class="plan-summary-meta">${doneCount} / ${studyPlan.length} днів виконано</div>
+    `;
+    planListEl.appendChild(summary);
+
+    studyPlan.forEach(dayPlan => {
+        const isDone = !!progress[dayPlan.day];
+
+        const card = document.createElement('div');
+        card.className = `plan-day${isDone ? ' plan-day-done' : ''}`;
+
+        const header = document.createElement('div');
+        header.className = 'plan-day-header';
+
+        const label = document.createElement('label');
+        label.className = 'plan-day-check';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isDone;
+        checkbox.addEventListener('change', () => {
+            const p = loadPlanProgress();
+            p[dayPlan.day] = checkbox.checked;
+            savePlanProgress(p);
+            renderPlan();
+        });
+
+        const num = document.createElement('span');
+        num.className = 'plan-day-number';
+        num.textContent = `День ${dayPlan.day}`;
+
+        label.appendChild(checkbox);
+        label.appendChild(num);
+        header.appendChild(label);
+
+        const title = document.createElement('div');
+        title.className = 'plan-day-title';
+        title.textContent = dayPlan.title;
+        header.appendChild(title);
+
+        card.appendChild(header);
+
+        if (dayPlan.focus) {
+            const focus = document.createElement('div');
+            focus.className = 'plan-day-focus';
+            focus.textContent = dayPlan.focus;
+            card.appendChild(focus);
+        }
+
+        const tasks = document.createElement('div');
+        tasks.className = 'plan-day-tasks';
+        dayPlan.tasks.forEach(task => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'plan-task-btn';
+            btn.textContent = task.label;
+            btn.addEventListener('click', () => goToPlanTask(task));
+            tasks.appendChild(btn);
+        });
+        card.appendChild(tasks);
+
+        planListEl.appendChild(card);
     });
 }
 
