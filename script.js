@@ -7,6 +7,13 @@ import * as srs from './srs.js';
 const SESSION_SIZE = 5;
 const THEME_KEY = 'wordGameTheme';
 const PLAN_PROGRESS_KEY = 'wordGamePlanProgress.v1';
+const GRAMMAR_PROGRESS_KEY = 'wordGameGrammarProgress.v1';
+const GRAMMAR_ROADMAP = [
+    { stage: 'Часи', topicIds: ['present-tenses', 'past-tenses', 'future-tenses', 'stative-verbs', 'tense-contrasts'] },
+    { stage: 'Структури', topicIds: ['conditionals', 'reported-speech', 'passive-voice'] },
+    { stage: 'Нюанси значення', topicIds: ['past-habits', 'wishes-regrets', 'future-plans'] },
+    { stage: 'Лексична граматика', topicIds: ['comparing', 'get-phrases'] },
+];
 const CATEGORY_ORDER = ['mixed', ...Object.keys(vocabulary)];
 const categoryChipLabels = { mixed: 'Змішано (усі теми)', ...categoryLabels };
 
@@ -198,15 +205,49 @@ function isCorrectAnswer(input, answer) {
     return accepted.includes(normalizeAnswer(input));
 }
 
-function checkExercise(item, input, feedback, answer) {
+function loadGrammarProgress() {
+    try {
+        return JSON.parse(localStorage.getItem(GRAMMAR_PROGRESS_KEY)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function saveGrammarProgress(progress) {
+    try {
+        localStorage.setItem(GRAMMAR_PROGRESS_KEY, JSON.stringify(progress));
+    } catch {
+        // localStorage unavailable - progress just won't persist
+    }
+}
+
+function recordExerciseResult(topicId, index, correct) {
+    if (!topicId) return;
+    const progress = loadGrammarProgress();
+    if (!progress[topicId]) progress[topicId] = {};
+    progress[topicId][index] = correct;
+    saveGrammarProgress(progress);
+    refreshRoadmap();
+}
+
+function getTopicExerciseStats(topicId, total) {
+    const progress = loadGrammarProgress();
+    const topicProgress = progress[topicId] || {};
+    const correct = Object.values(topicProgress).filter(Boolean).length;
+    const attempted = Object.keys(topicProgress).length;
+    return { correct, attempted, total };
+}
+
+function checkExercise(item, input, feedback, answer, topicId, index) {
     const correct = isCorrectAnswer(input.value, answer);
     item.classList.remove('exercise-correct', 'exercise-wrong');
     item.classList.add(correct ? 'exercise-correct' : 'exercise-wrong');
     feedback.textContent = correct ? '✓ Правильно' : `✗ Правильна відповідь: ${answer.split('/')[0].trim()}`;
+    recordExerciseResult(topicId, index, correct);
     return correct;
 }
 
-function buildExerciseBlock(exercises) {
+function buildExerciseBlock(exercises, topicId) {
     const wrap = document.createElement('div');
     wrap.className = 'exercise-block';
 
@@ -215,7 +256,7 @@ function buildExerciseBlock(exercises) {
     heading.textContent = 'Практичні вправи';
     wrap.appendChild(heading);
 
-    const checkers = exercises.map(ex => {
+    const checkers = exercises.map((ex, index) => {
         const item = document.createElement('div');
         item.className = 'exercise-item';
 
@@ -243,7 +284,7 @@ function buildExerciseBlock(exercises) {
         feedback.className = 'exercise-feedback';
         item.appendChild(feedback);
 
-        const runCheck = () => checkExercise(item, input, feedback, ex.answer);
+        const runCheck = () => checkExercise(item, input, feedback, ex.answer, topicId, index);
         input.addEventListener('keydown', e => {
             if (e.key === 'Enter') runCheck();
         });
@@ -344,7 +385,7 @@ function buildGrammarCard(topic) {
     }
 
     if (topic.exercises?.length) {
-        body.appendChild(buildExerciseBlock(topic.exercises));
+        body.appendChild(buildExerciseBlock(topic.exercises, topic.id));
     }
 
     if (topic.category) {
@@ -375,6 +416,89 @@ function buildGrammarCard(topic) {
     return card;
 }
 
+function findGrammarTopicById(id) {
+    return grammarTopics.find(t => t.id === id) || grammarB2Topics.find(t => t.id === id);
+}
+
+function openGrammarTopic(topicId) {
+    switchTab('grammar');
+    requestAnimationFrame(() => {
+        const card = grammarListEl.querySelector(`[data-topic-id="${topicId}"]`);
+        if (card) {
+            card.open = true;
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+}
+
+function getTopicStatus(topic) {
+    const total = topic.exercises?.length || 0;
+    if (!total) return { correct: 0, attempted: 0, total: 0, status: 'none' };
+    const stats = getTopicExerciseStats(topic.id, total);
+    const status = stats.correct === total ? 'mastered' : stats.attempted > 0 ? 'in-progress' : 'not-started';
+    return { ...stats, status };
+}
+
+function buildRoadmapContent(container) {
+    container.innerHTML = '';
+
+    const allIds = GRAMMAR_ROADMAP.flatMap(s => s.topicIds);
+    const masteredCount = allIds.filter(id => {
+        const t = findGrammarTopicById(id);
+        return t && getTopicStatus(t).status === 'mastered';
+    }).length;
+    const percent = Math.round((masteredCount / allIds.length) * 100);
+
+    const summary = document.createElement('div');
+    summary.className = 'roadmap-summary';
+    summary.innerHTML = `
+        <div class="roadmap-summary-title">Роадмап граматики B2</div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${percent}%"></div></div>
+        <div class="roadmap-summary-meta">${masteredCount} / ${allIds.length} тем опановано (усі вправи правильно)</div>
+    `;
+    container.appendChild(summary);
+
+    GRAMMAR_ROADMAP.forEach(stage => {
+        const stageEl = document.createElement('div');
+        stageEl.className = 'roadmap-stage';
+
+        const stageTitle = document.createElement('div');
+        stageTitle.className = 'roadmap-stage-title';
+        stageTitle.textContent = stage.stage;
+        stageEl.appendChild(stageTitle);
+
+        const path = document.createElement('div');
+        path.className = 'roadmap-path';
+
+        stage.topicIds.forEach(id => {
+            const topic = findGrammarTopicById(id);
+            if (!topic) return;
+            const info = getTopicStatus(topic);
+            const dot = info.status === 'mastered' ? '✓' : info.status === 'in-progress' ? '◐' : '○';
+
+            const node = document.createElement('button');
+            node.type = 'button';
+            node.className = `roadmap-node roadmap-node--${info.status}`;
+            node.innerHTML = `
+                <span class="roadmap-node-dot">${dot}</span>
+                <span class="roadmap-node-icon">${topic.icon || '📘'}</span>
+                <span class="roadmap-node-title">${topic.title}</span>
+                ${info.total ? `<span class="roadmap-node-score">${info.correct}/${info.total}</span>` : ''}
+            `;
+            node.addEventListener('click', () => openGrammarTopic(id));
+            path.appendChild(node);
+        });
+
+        stageEl.appendChild(path);
+        container.appendChild(stageEl);
+    });
+}
+
+function refreshRoadmap() {
+    const roadmap = document.getElementById('grammarRoadmap');
+    if (roadmap) buildRoadmapContent(roadmap);
+}
+
 function renderGrammar() {
     grammarListEl.innerHTML = '';
 
@@ -389,6 +513,12 @@ function renderGrammar() {
     grammarTopics.forEach(topic => grammarListEl.appendChild(buildGrammarCard(topic)));
 
     addGroupHeading('Граматика B2');
+    const roadmap = document.createElement('div');
+    roadmap.className = 'roadmap';
+    roadmap.id = 'grammarRoadmap';
+    grammarListEl.appendChild(roadmap);
+    buildRoadmapContent(roadmap);
+
     grammarB2Topics.forEach(topic => grammarListEl.appendChild(buildGrammarCard(topic)));
 }
 
@@ -454,14 +584,7 @@ function goToPlanTask(task) {
         loadWords();
         switchTab('practice');
     } else if (task.type === 'grammar') {
-        switchTab('grammar');
-        requestAnimationFrame(() => {
-            const card = grammarListEl.querySelector(`[data-topic-id="${task.topicId}"]`);
-            if (card) {
-                card.open = true;
-                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
+        openGrammarTopic(task.topicId);
     } else if (task.type === 'tab') {
         switchTab(task.target);
     }
