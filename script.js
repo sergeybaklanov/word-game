@@ -112,7 +112,7 @@ function checkMatch() {
         const englishElement = document.querySelector('.left .selected');
         const translationElement = document.querySelector('.right .selected');
 
-        if (selectedEnglish.english === selectedTranslation.english) {
+        if (selectedEnglish === selectedTranslation) {
             englishElement.classList.add('correct');
             translationElement.classList.add('correct');
 
