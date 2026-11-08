@@ -318,4 +318,11 @@ const vocabulary = {
 	transitionWords,
 }
 
+export const categoryLabels = {
+	words: 'Загальна лексика',
+	infinitives: 'Інфінітив (to + V)',
+	gerund: 'Герундій (-ing)',
+	transitionWords: 'Сполучні слова',
+};
+
 export default vocabulary;
