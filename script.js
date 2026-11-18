@@ -12,7 +12,7 @@ const GRAMMAR_ROADMAP = [
     { stage: 'Часи', topicIds: ['present-tenses', 'past-tenses', 'future-tenses', 'stative-verbs', 'tense-contrasts'] },
     { stage: 'Структури', topicIds: ['conditionals', 'reported-speech', 'passive-voice'] },
     { stage: 'Нюанси значення', topicIds: ['past-habits', 'wishes-regrets', 'future-plans'] },
-    { stage: 'Лексична граматика', topicIds: ['comparing', 'get-phrases'] },
+    { stage: 'Лексична граматика', topicIds: ['comparing', 'get-phrases', 'giving-advice'] },
 ];
 const CATEGORY_ORDER = ['mixed', ...Object.keys(vocabulary)];
 const categoryChipLabels = { mixed: 'Змішано (усі теми)', ...categoryLabels };
