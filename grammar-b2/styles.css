@@ -23,6 +23,17 @@
   --transition: 0.18s ease;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:   #ece8de;
+    --paper: #17140f;
+    --card:  #211d16;
+    --rule:  #332d22;
+    --muted: #a99d87;
+    --hint:  #7d7362;
+  }
+}
+
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -336,7 +347,8 @@ main {
   background: var(--card);
   border: 1px solid var(--rule);
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 16px;
 }
 
@@ -344,6 +356,7 @@ main {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 480px;
 }
 
 .ex-table thead th {
@@ -984,4 +997,10 @@ main {
   .index-content { padding: 0 20px 60px; }
   .cond-row { grid-template-columns: 70px 1fr 1fr; }
   .cond-row .cond-cell:last-child { grid-column: 1/-1; border-top: 1px solid var(--rule); }
+}
+
+@media (max-width: 480px) {
+  .page-header h1 { font-size: 22px; }
+  .section-title { font-size: 20px; }
+  .ex-table-wrap { margin: 0 -18px; border-radius: 0; border-left: none; border-right: none; }
 }
