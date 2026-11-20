@@ -23,6 +23,17 @@
   --transition: 0.18s ease;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:   #ece8de;
+    --paper: #17140f;
+    --card:  #211d16;
+    --rule:  #332d22;
+    --muted: #a99d87;
+    --hint:  #7d7362;
+  }
+}
+
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -336,7 +347,8 @@ main {
   background: var(--card);
   border: 1px solid var(--rule);
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 16px;
 }
 
@@ -344,6 +356,7 @@ main {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 480px;
 }
 
 .ex-table thead th {
@@ -746,6 +759,12 @@ main {
   padding: 14px 20px 16px;
 }
 
+.gap-body svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 .rule-text {
   font-size: 13.5px;
   color: var(--muted);
@@ -978,4 +997,29 @@ main {
   .index-content { padding: 0 20px 60px; }
   .cond-row { grid-template-columns: 70px 1fr 1fr; }
   .cond-row .cond-cell:last-child { grid-column: 1/-1; border-top: 1px solid var(--rule); }
+}
+
+@media (max-width: 480px) {
+  .page-header h1 { font-size: 22px; }
+  .section-title { font-size: 20px; }
+  .ex-table-wrap { margin: 0 -18px 16px; border-radius: 0; border-left: none; border-right: none; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ex-table tbody tr:nth-child(even) { background: #28231a; }
+  .callout.warn { background: #332c14; }
+  .callout.info { background: #16222c; }
+  .callout.tip  { background: #16261f; }
+  .callout.err  { background: #2e1d15; }
+  .gap-header   { background: #231f17; }
+  .gap-num      { background: #332e24; }
+  nav.sidebar   { background: #1c1a16; }
+  .formula      { background: #1c1a16; }
+  .gap          { background: #1c1a16; }
+  .index-hero   { background: #1c1a16; }
+  .ex-table thead th { background: #2b2619; color: #a99d87; }
+  .ex-table tbody tr:hover { background: #2e2819; }
+  .cond-head .cond-cell { background: #2b2619; color: #a99d87; }
+  .source-header { background: #2b2619; color: #a99d87; }
+  .hl { color: #e8824a; }
 }
