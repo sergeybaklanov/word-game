@@ -125,15 +125,27 @@
 
     markActivePage();
 
-    /* In-page TOC anchors under the active sidebar item, derived
-       from this page's own .section[id] + .section-title elements. */
+    /* In-page TOC anchors under the active sidebar item. Labels come
+       from the matching topic's `toc` data (the original hardcoded
+       anchor text) when present; otherwise fall back to deriving the
+       label from each page's own .section-title element. */
     const activeItem = sidebar.querySelector('.nav-item.active');
     if (activeItem) {
+      const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+      const currentTopic = GRAMMAR_B2_TOPICS.find(t => t.slug + '.html' === currentFile);
       const sections = document.querySelectorAll('main .section[id]');
       let afterEl = activeItem;
       sections.forEach(section => {
-        const titleEl = section.querySelector('.section-title');
-        const label = titleEl ? titleEl.textContent : section.id;
+        let label;
+        const tocEntry = currentTopic && currentTopic.toc
+          ? currentTopic.toc.find(t => t.id === section.id)
+          : null;
+        if (tocEntry) {
+          label = tocEntry.label;
+        } else {
+          const titleEl = section.querySelector('.section-title');
+          label = titleEl ? titleEl.textContent : section.id;
+        }
         const anchor = document.createElement('a');
         anchor.className = 'nav-item';
         anchor.setAttribute('href', '#' + section.id);
@@ -158,6 +170,10 @@
     if (idx > 0) {
       const prev = GRAMMAR_B2_TOPICS[idx - 1];
       pageNav.appendChild(buildPageNavBtn('page-nav-btn prev', prev.slug + '.html', '← Previous', prev.navLabel));
+    } else {
+      /* No prev button on the first topic — keep an empty placeholder
+         so the 2-column page-nav grid still pushes "Next" into column 2. */
+      pageNav.appendChild(document.createElement('div'));
     }
 
     if (idx < GRAMMAR_B2_TOPICS.length - 1) {
