@@ -48,11 +48,10 @@ Ensure `id` matches the slug you will use in steps 5–6.
 
 ### 5. Create the HTML Reference Page
 
-Create `grammar-b2/<slug>.html` reusing the shared component classes and following the structure of neighboring pages:
+Create `grammar-b2/<slug>.html` reusing the shared component classes and following the structure of neighboring pages (copy the `<nav class="sidebar">`...`<main>` skeleton from an existing page like `infinitives.html` verbatim):
 - Use existing component classes: `page-header`, `section`, `rule-block`, `ex-table`, `callout`, `topic-card`.
-- Include empty mount points for:
-  - `.sidebar` (populated by nav.js)
-  - `.page-nav` (populated by nav.js)
+- `<nav class="sidebar">` keeps its static `nav-brand` + two `nav-back` links (identical on every page) — do NOT make the whole sidebar empty. Only leave nothing *after* those two links; `nav.js` appends the topic-list items there at runtime.
+- `<div class="page-nav">` is fully empty — `nav.js` fills in the prev/next buttons at runtime.
 - End the page with exactly these two script tags:
   ```html
   <script src="topics-data.js"></script>
