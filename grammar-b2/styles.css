@@ -746,6 +746,12 @@ main {
   padding: 14px 20px 16px;
 }
 
+.gap-body svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 .rule-text {
   font-size: 13.5px;
   color: var(--muted);
