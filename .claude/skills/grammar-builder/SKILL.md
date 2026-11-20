@@ -1,6 +1,6 @@
 ---
 name: grammar-builder
-description: Use when the user gives a B2 English grammar topic (name + source material) and wants it added to WordUp's grammar-b2 pipeline.
+description: Use when the user gives a B2 English grammar topic (name + source material) and wants it added to WordUp's grammar-b2 pipeline. For general site work (bugs, features, non-grammar-topic changes), use `architect` instead.
 ---
 
 ## Adding a B2 Grammar Topic to WordUp
@@ -15,8 +15,8 @@ If the topic or source material is missing, ask for it — never invent grammar 
 
 ### 2. Check for Slug Collision
 
-Search `grammar-b2/topics-data.js` and `grammar-b2.js` for a slug collision (same or near-same topic). If found, stop and flag it to the user instead of creating a duplicate:
-- Read both files and check if a topic with the same or similar slug already exists.
+Search `grammar-b2/topics-data.js`, `grammar-b2.js`, and `grammar.js` for a slug collision (same or near-same topic). If found, stop and flag it to the user instead of creating a duplicate:
+- Read all three files and check if a topic with the same or similar slug already exists.
 - If a collision is found, report it and ask the user to pick a different topic or modify the existing entry instead.
 
 ### 3. Draft Rules, Examples, and Exercises
@@ -44,7 +44,7 @@ Add the new object to the end of the `grammarB2Topics` array with this shape:
 }
 ```
 
-Ensure `id` matches the slug you will use in steps 5–6.
+By default, `id` should match the slug you will use in steps 5–6. If that id already exists in `grammar.js` (checked in step 2), choose a different, descriptive `id` instead (e.g. append `-forms` or similar, matching the pattern used by the existing `infinitive-forms` entry) while keeping the slug/filename as the user's requested topic name.
 
 ### 5. Create the HTML Reference Page
 
@@ -69,13 +69,17 @@ Add exactly one new entry to the `GRAMMAR_B2_TOPICS` array in `grammar-b2/topics
 - Set `refPage` to the HTML filename created in step 5 (e.g., `'<slug>.html'`).
 - Optionally include a `toc` array if the page has sections.
 
-### 7. Dispatch Designer for Visual Review
+### 7. Wire into the Roadmap Widget
+
+Open `script.js`, find the `GRAMMAR_ROADMAP` constant, and add the new topic's `id` to the appropriate stage's id list (ask the user which stage if ambiguous).
+
+### 8. Dispatch Designer for Visual Review
 
 Invoke the `designer` agent on the new page only (the HTML file created in step 5):
 - The designer will check for mobile layout, contrast, and component consistency.
 - Wait for the designer to report either `PASS` or `ISSUES`.
 
-### 8. Dispatch Reviewer for Content Check
+### 9. Dispatch Reviewer for Content Check
 
 Invoke the `reviewer` agent with the content checklist on both:
 - The new HTML reference page
@@ -89,16 +93,16 @@ The reviewer will validate:
 
 Wait for the reviewer to report either `PASS` or issues requiring fixes.
 
-### 9. Apply Fixes and Re-dispatch if Needed
+### 10. Apply Fixes and Re-dispatch if Needed
 
 If the designer or reviewer reported issues:
 - Fix the content, markup, or data entries as flagged.
 - Re-dispatch both the designer and reviewer once to confirm the fixes.
 - Stop after one re-dispatch cycle; if either agent still reports issues, escalate to the user.
 
-If both returned `PASS`, proceed to step 10.
+If both returned `PASS`, proceed to step 11.
 
-### 10. Report Done
+### 11. Report Done
 
 Confirm that the topic has been successfully added:
 - Provide a link to the new reference page (e.g., `grammar-b2/<slug>.html`).

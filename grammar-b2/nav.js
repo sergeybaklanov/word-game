@@ -101,7 +101,6 @@
 
   /* ── Render sidebar nav items from GRAMMAR_B2_TOPICS ── */
   function renderSidebarTopics() {
-    if (typeof GRAMMAR_B2_TOPICS === 'undefined') return;
     const sidebar = document.querySelector('nav.sidebar');
     if (!sidebar) return;
 
@@ -159,13 +158,12 @@
 
   /* ── Render prev/next page-nav buttons from GRAMMAR_B2_TOPICS ── */
   function renderPrevNext() {
-    if (typeof GRAMMAR_B2_TOPICS === 'undefined') return;
     const pageNav = document.querySelector('.page-nav');
     if (!pageNav) return;
 
     const currentFile = window.location.pathname.split('/').pop() || 'index.html';
     const idx = GRAMMAR_B2_TOPICS.findIndex(t => t.slug + '.html' === currentFile);
-    if (idx === -1) return;
+    if (idx === -1) { console.warn('[nav.js] current page not found in GRAMMAR_B2_TOPICS:', currentFile); return; }
 
     if (idx > 0) {
       const prev = GRAMMAR_B2_TOPICS[idx - 1];
@@ -186,7 +184,6 @@
 
   /* ── Render index cards (index.html) from GRAMMAR_B2_TOPICS ── */
   function renderIndexCards() {
-    if (typeof GRAMMAR_B2_TOPICS === 'undefined') return;
     const content = document.querySelector('.index-content');
     if (!content) return;
 
@@ -229,12 +226,13 @@
 
   /* ── Init ─────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
-    renderSidebarTopics();
-    renderPrevNext();
-    renderIndexCards();
+    if (typeof GRAMMAR_B2_TOPICS !== 'undefined') {
+      renderSidebarTopics();
+      renderPrevNext();
+      renderIndexCards();
+    }
     initScrollSpy();
     initSmoothScroll();
-    markActivePage();
     initKeyNav();
   });
 })();
