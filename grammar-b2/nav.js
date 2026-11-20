@@ -51,6 +51,152 @@
     });
   }
 
+  /* ── Build index-card markup from topic data ──── */
+  function buildIndexCard(topic) {
+    const a = document.createElement('a');
+    a.className = 'index-card';
+    a.href = topic.slug + '.html';
+
+    const tag = document.createElement('div');
+    tag.className = 'index-card-tag';
+    tag.textContent = topic.cardTag;
+
+    const title = document.createElement('div');
+    title.className = 'index-card-title';
+    title.textContent = topic.cardTitle;
+
+    const desc = document.createElement('div');
+    desc.className = 'index-card-desc';
+    desc.textContent = topic.cardDesc;
+
+    const arrow = document.createElement('div');
+    arrow.className = 'index-card-arrow';
+    arrow.textContent = '→';
+
+    a.appendChild(tag);
+    a.appendChild(title);
+    a.appendChild(desc);
+    a.appendChild(arrow);
+    return a;
+  }
+
+  /* ── Build a page-nav-btn (prev/next) from topic data ── */
+  function buildPageNavBtn(cls, href, dir, label) {
+    const a = document.createElement('a');
+    a.className = cls;
+    a.href = href;
+
+    const dirDiv = document.createElement('div');
+    dirDiv.className = 'page-nav-dir';
+    dirDiv.textContent = dir;
+
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'page-nav-label';
+    labelDiv.textContent = label;
+
+    a.appendChild(dirDiv);
+    a.appendChild(labelDiv);
+    return a;
+  }
+
+  /* ── Render sidebar nav items from GRAMMAR_B2_TOPICS ── */
+  function renderSidebarTopics() {
+    if (typeof GRAMMAR_B2_TOPICS === 'undefined') return;
+    const sidebar = document.querySelector('nav.sidebar');
+    if (!sidebar) return;
+
+    const frag = document.createDocumentFragment();
+    let lastGroup = null;
+    GRAMMAR_B2_TOPICS.forEach(topic => {
+      if (topic.navGroup !== lastGroup) {
+        const label = document.createElement('div');
+        label.className = 'nav-group-label';
+        label.textContent = topic.navGroup;
+        frag.appendChild(label);
+        lastGroup = topic.navGroup;
+      }
+      const link = document.createElement('a');
+      link.className = 'nav-item';
+      link.href = topic.slug + '.html';
+      link.textContent = topic.navLabel;
+      frag.appendChild(link);
+    });
+    sidebar.appendChild(frag);
+
+    markActivePage();
+
+    /* In-page TOC anchors under the active sidebar item, derived
+       from this page's own .section[id] + .section-title elements. */
+    const activeItem = sidebar.querySelector('.nav-item.active');
+    if (activeItem) {
+      const sections = document.querySelectorAll('main .section[id]');
+      let afterEl = activeItem;
+      sections.forEach(section => {
+        const titleEl = section.querySelector('.section-title');
+        const label = titleEl ? titleEl.textContent : section.id;
+        const anchor = document.createElement('a');
+        anchor.className = 'nav-item';
+        anchor.setAttribute('href', '#' + section.id);
+        anchor.setAttribute('style', 'padding-left:36px;font-size:12px');
+        anchor.textContent = label;
+        afterEl.insertAdjacentElement('afterend', anchor);
+        afterEl = anchor;
+      });
+    }
+  }
+
+  /* ── Render prev/next page-nav buttons from GRAMMAR_B2_TOPICS ── */
+  function renderPrevNext() {
+    if (typeof GRAMMAR_B2_TOPICS === 'undefined') return;
+    const pageNav = document.querySelector('.page-nav');
+    if (!pageNav) return;
+
+    const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+    const idx = GRAMMAR_B2_TOPICS.findIndex(t => t.slug + '.html' === currentFile);
+    if (idx === -1) return;
+
+    if (idx > 0) {
+      const prev = GRAMMAR_B2_TOPICS[idx - 1];
+      pageNav.appendChild(buildPageNavBtn('page-nav-btn prev', prev.slug + '.html', '← Previous', prev.navLabel));
+    }
+
+    if (idx < GRAMMAR_B2_TOPICS.length - 1) {
+      const next = GRAMMAR_B2_TOPICS[idx + 1];
+      pageNav.appendChild(buildPageNavBtn('page-nav-btn next', next.slug + '.html', 'Next →', next.navLabel));
+    } else {
+      pageNav.appendChild(buildPageNavBtn('page-nav-btn next', 'index.html', 'Back to', 'All Topics'));
+    }
+  }
+
+  /* ── Render index cards (index.html) from GRAMMAR_B2_TOPICS ── */
+  function renderIndexCards() {
+    if (typeof GRAMMAR_B2_TOPICS === 'undefined') return;
+    const content = document.querySelector('.index-content');
+    if (!content) return;
+
+    const frag = document.createDocumentFragment();
+    let lastGroup = null;
+    let grid = null;
+
+    GRAMMAR_B2_TOPICS.forEach(topic => {
+      if (topic.indexGroup !== lastGroup) {
+        const label = document.createElement('div');
+        label.className = 'index-group-label';
+        label.textContent = topic.indexGroup;
+        frag.appendChild(label);
+
+        grid = document.createElement('div');
+        grid.className = 'index-grid';
+        frag.appendChild(grid);
+
+        lastGroup = topic.indexGroup;
+      }
+      grid.appendChild(buildIndexCard(topic));
+    });
+
+    content.insertBefore(frag, content.firstChild);
+  }
+
   /* ── Keyboard navigation (←/→ for prev/next page) ── */
   function initKeyNav() {
     const prevBtn = document.querySelector('.page-nav-btn.prev');
@@ -67,6 +213,9 @@
 
   /* ── Init ─────────────────────────────── */
   document.addEventListener('DOMContentLoaded', () => {
+    renderSidebarTopics();
+    renderPrevNext();
+    renderIndexCards();
     initScrollSpy();
     initSmoothScroll();
     markActivePage();
