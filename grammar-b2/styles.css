@@ -1017,9 +1017,9 @@ main {
   .formula      { background: #1c1a16; }
   .gap          { background: #1c1a16; }
   .index-hero   { background: #1c1a16; }
-  .ex-table thead th { background: #2b2619; }
+  .ex-table thead th { background: #2b2619; color: #a99d87; }
   .ex-table tbody tr:hover { background: #2e2819; }
-  .cond-head .cond-cell { background: #2b2619; }
-  .source-header { background: #2b2619; }
+  .cond-head .cond-cell { background: #2b2619; color: #a99d87; }
+  .source-header { background: #2b2619; color: #a99d87; }
   .hl { color: #e8824a; }
 }
