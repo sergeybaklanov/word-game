@@ -1,136 +1,678 @@
-const NUM_WORDS = 3;
+import vocabulary, { categoryLabels } from './vocabulary.js';
+import grammarTopics from './grammar.js';
+import grammarB2Topics from './grammar-b2.js';
+import studyPlan from './plan.js';
+import * as srs from './srs.js';
 
-const selectionMenu = document.querySelector('#selectionMenu');
-const subminButton = document.querySelector('#submitWords');
+const SESSION_SIZE = 5;
+const THEME_KEY = 'wordGameTheme';
+const PLAN_PROGRESS_KEY = 'wordGamePlanProgress.v1';
+const GRAMMAR_PROGRESS_KEY = 'wordGameGrammarProgress.v1';
+const GRAMMAR_ROADMAP = [
+    { stage: 'Часи', topicIds: ['present-tenses', 'past-tenses', 'future-tenses', 'stative-verbs', 'tense-contrasts'] },
+    { stage: 'Структури', topicIds: ['conditionals', 'reported-speech', 'passive-voice'] },
+    { stage: 'Нюанси значення', topicIds: ['past-habits', 'wishes-regrets', 'future-plans'] },
+    { stage: 'Лексична граматика', topicIds: ['comparing', 'get-phrases', 'giving-advice', 'infinitive-forms'] },
+];
+const CATEGORY_ORDER = ['mixed', ...Object.keys(vocabulary)];
+const categoryChipLabels = { mixed: 'Змішано (усі теми)', ...categoryLabels };
 
-const voc = Vocabulary.vocabulary;
-
-init();
-
-function init() {
-	for (const key in voc) {
-		const option = document.createElement('option');
-		option.setAttribute('value', key);
-		option.innerText = key;
-		selectionMenu.appendChild(option);
-	}
-}
-
-subminButton.addEventListener('onclick', submitWords());
-
-function submitWords(){
-	console.log(selectionMenu.value);	
-}
-
-let remainingWords = [];
+let currentCategoryKey = 'mixed';
+let sentenceGameMode = false;
+let sessionStreak = 0;
 let selectedEnglish = null;
 let selectedTranslation = null;
 
-let sentenceGameMode = false;
+const categorySelectEl = document.getElementById('categorySelect');
+const englishListEl = document.getElementById('englishWords');
+const translationListEl = document.getElementById('translatedWords');
+const wordsCountEl = document.getElementById('wordsInTheList');
+const wordsLeftEl = document.getElementById('wordsLeft');
+const sessionStreakEl = document.getElementById('sessionStreak');
+const statusEl = document.getElementById('status');
+const streakCountEl = document.getElementById('streakCount');
+const themeToggleEl = document.getElementById('themeToggle');
+const grammarListEl = document.getElementById('grammarList');
+const progressListEl = document.getElementById('progressList');
+const planListEl = document.getElementById('planList');
 
-const toggleSwitch = document.getElementById('toggleSwitch');
-
-toggleSwitch.addEventListener('change', () => {
-	sentenceGameMode = toggleSwitch.checked;
-	loadWords();
-});
-
-function loadWords() {
-	const englishList = document.getElementById('englishWords');
-	const translationList = document.getElementById('translatedWords');
-	englishList.innerHTML = '';
-	translationList.innerHTML = '';
-
-	if (remainingWords.length === 0) {
-		document.getElementById('status').textContent = "Game Over! You've matched all the words!";
-		return;
-	}
-
-	// Select 10 random unique words
-	const selectedPairs = getRandomWords(NUM_WORDS, remainingWords);
-
-	// Add English words
-	selectedPairs.forEach(pair => {
-		const englishLi = document.createElement('li');
-		englishLi.textContent = sentenceGameMode ? pair.english + ' (' + pair.translation + ')' : pair.english;
-		englishLi.addEventListener('click', () => selectEnglish(englishLi, pair));
-		englishList.appendChild(englishLi);
-	});
-
-	// Shuffle translations and add them
-	const shuffledTranslations = shuffle(selectedPairs);
-	shuffledTranslations.forEach(pair => {
-		const translationLi = document.createElement('li');
-		translationLi.textContent = sentenceGameMode ? pair.sentence : pair.translation;
-		translationLi.addEventListener('click', () => selectTranslation(translationLi, pair));
-		translationList.appendChild(translationLi);
-	});
-}
-
-function getRandomWords(count, wordList) {
-	return shuffle(wordList).slice(0, count);
+function buildPool(key) {
+    if (key === 'mixed') {
+        return Object.keys(vocabulary).flatMap(catKey =>
+            vocabulary[catKey].map(pair => ({ ...pair, _cat: catKey }))
+        );
+    }
+    return vocabulary[key].map(pair => ({ ...pair, _cat: key }));
 }
 
 function shuffle(array) {
-	return array.sort(() => Math.random() - 0.5);
+    return array.sort(() => Math.random() - 0.5);
 }
 
-function selectEnglish(element, word) {
-	clearSelections('englishWords');
-	element.classList.add('selected');
-	selectedEnglish = word;
-	checkMatch();
+function loadWords() {
+    englishListEl.innerHTML = '';
+    translationListEl.innerHTML = '';
+
+    const pool = buildPool(currentCategoryKey);
+    const selectedPairs = srs.pickSessionWords(pool, SESSION_SIZE);
+
+    selectedPairs.forEach((pair, index) => {
+        const li = document.createElement('li');
+        li.textContent = sentenceGameMode ? `${pair.english} (${pair.translation})` : pair.english;
+        li.style.gridRow = index + 1;
+        li.addEventListener('click', () => selectEnglish(li, pair));
+        englishListEl.appendChild(li);
+    });
+
+    shuffle([...selectedPairs]).forEach((pair, index) => {
+        const li = document.createElement('li');
+        li.textContent = sentenceGameMode ? pair.sentence : pair.translation;
+        li.style.gridRow = index + 1;
+        li.addEventListener('click', () => selectTranslation(li, pair));
+        translationListEl.appendChild(li);
+    });
+
+    updateSessionBar();
 }
 
-function selectTranslation(element, word) {
-	clearSelections('translatedWords');
-	element.classList.add('selected');
-	selectedTranslation = word;
-	checkMatch();
+function updateSessionBar() {
+    const pool = buildPool(currentCategoryKey);
+    const stats = srs.getCategoryStats(pool);
+
+    wordsCountEl.textContent = stats.total;
+    wordsLeftEl.textContent = stats.due;
+    sessionStreakEl.textContent = sessionStreak;
+    streakCountEl.textContent = srs.getStreak().count;
+
+    statusEl.textContent = stats.due === 0
+        ? 'Усі слова цієї категорії повторені! Можна продовжити практику заздалегідь. 🎉'
+        : '';
 }
 
-function selectCorrectTranslation(word) {
-	clearSelections('translatedWords');
+function selectEnglish(element, pair) {
+    clearSelections('englishWords');
+    element.classList.add('selected');
+    selectedEnglish = pair;
+    checkMatch();
+}
 
+function selectTranslation(element, pair) {
+    clearSelections('translatedWords');
+    element.classList.add('selected');
+    selectedTranslation = pair;
+    checkMatch();
 }
 
 function checkMatch() {
-	if (selectedEnglish && selectedTranslation) {
-		const englishElement = document.querySelector('.left .selected');
-		const translationElement = document.querySelector('.right .selected');
+    if (!(selectedEnglish && selectedTranslation)) return;
 
-		if (selectedEnglish.english === selectedTranslation.english) {
-			englishElement.classList.add('correct');
-			translationElement.classList.add('correct');
+    const englishElement = document.querySelector('.left .selected');
+    const translationElement = document.querySelector('.right .selected');
+    const correct = selectedEnglish === selectedTranslation;
 
-			remainingWords = remainingWords.filter(
-				word => word.english !== selectedEnglish.english
-			);
+    srs.recordResult(selectedEnglish, correct);
 
-			setTimeout(() => {
-				englishElement.remove();
-				translationElement.remove();
+    if (correct) {
+        englishElement.classList.add('correct');
+        translationElement.classList.add('correct');
+        sessionStreak++;
+        updateSessionBar();
+        setTimeout(loadWords, 700);
+    } else {
+        englishElement.classList.add('wrong');
+        translationElement.classList.add('wrong');
+        sessionStreak = 0;
+        updateSessionBar();
+        setTimeout(() => {
+            clearSelections('englishWords');
+            clearSelections('translatedWords');
+        }, 700);
+    }
 
-				loadWords();
-			}, 1000);
-		} else {
-			englishElement.classList.add('wrong');
-			translationElement.classList.add('wrong');
-			setTimeout(() => {
-				clearSelections('englishWords');
-				clearSelections('translatedWords');
-			}, 1000);
-		}
-		selectedEnglish = null;
-		selectedTranslation = null;
-	}
+    selectedEnglish = null;
+    selectedTranslation = null;
 }
 
 function clearSelections(columnId) {
-	const selectedItems = document.querySelectorAll(`#${columnId} .selected`);
-	selectedItems.forEach(item => {
-		item.classList.remove('selected', 'wrong', 'correct');
-	});
+    document.querySelectorAll(`#${columnId} .selected`).forEach(item => {
+        item.classList.remove('selected', 'wrong', 'correct');
+    });
 }
 
-loadWords();
+function renderCategoryChips() {
+    categorySelectEl.innerHTML = '';
+    CATEGORY_ORDER.forEach(key => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = `chip${key === currentCategoryKey ? ' active' : ''}`;
+        chip.textContent = categoryChipLabels[key] || key;
+        chip.addEventListener('click', () => {
+            currentCategoryKey = key;
+            renderCategoryChips();
+            loadWords();
+        });
+        categorySelectEl.appendChild(chip);
+    });
+}
+
+function wireModeToggle() {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            sentenceGameMode = btn.dataset.mode === 'sentence';
+            loadWords();
+        });
+    });
+}
+
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
+    document.querySelectorAll('.view').forEach(view => view.classList.toggle('hidden', view.id !== `view-${name}`));
+    if (name === 'progress') renderProgress();
+    if (name === 'plan') renderPlan();
+}
+
+function wireTabs() {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+}
+
+function wireTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    const initial = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(initial);
+
+    themeToggleEl.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem(THEME_KEY, next);
+        applyTheme(next);
+    });
+}
+
+function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    themeToggleEl.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function normalizeAnswer(str) {
+    return str.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,!?;:]+$/, '');
+}
+
+function isCorrectAnswer(input, answer) {
+    const accepted = answer.split('/').map(normalizeAnswer);
+    return accepted.includes(normalizeAnswer(input));
+}
+
+function loadGrammarProgress() {
+    try {
+        return JSON.parse(localStorage.getItem(GRAMMAR_PROGRESS_KEY)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function saveGrammarProgress(progress) {
+    try {
+        localStorage.setItem(GRAMMAR_PROGRESS_KEY, JSON.stringify(progress));
+    } catch {
+        // localStorage unavailable - progress just won't persist
+    }
+}
+
+function recordExerciseResult(topicId, index, correct) {
+    if (!topicId) return;
+    const progress = loadGrammarProgress();
+    if (!progress[topicId]) progress[topicId] = {};
+    progress[topicId][index] = correct;
+    saveGrammarProgress(progress);
+    refreshRoadmap();
+}
+
+function getTopicExerciseStats(topicId, total) {
+    const progress = loadGrammarProgress();
+    const topicProgress = progress[topicId] || {};
+    const correct = Object.values(topicProgress).filter(Boolean).length;
+    const attempted = Object.keys(topicProgress).length;
+    return { correct, attempted, total };
+}
+
+function checkExercise(item, input, feedback, answer, topicId, index) {
+    const correct = isCorrectAnswer(input.value, answer);
+    item.classList.remove('exercise-correct', 'exercise-wrong');
+    item.classList.add(correct ? 'exercise-correct' : 'exercise-wrong');
+    feedback.textContent = correct ? '✓ Правильно' : `✗ Правильна відповідь: ${answer.split('/')[0].trim()}`;
+    recordExerciseResult(topicId, index, correct);
+    return correct;
+}
+
+function buildExerciseBlock(exercises, topicId) {
+    const wrap = document.createElement('div');
+    wrap.className = 'exercise-block';
+
+    const heading = document.createElement('div');
+    heading.className = 'exercise-heading';
+    heading.textContent = 'Практичні вправи';
+    wrap.appendChild(heading);
+
+    const checkers = exercises.map((ex, index) => {
+        const item = document.createElement('div');
+        item.className = 'exercise-item';
+
+        const sentenceEl = document.createElement('div');
+        sentenceEl.className = 'exercise-sentence';
+        const [before, after] = ex.sentence.split('____');
+        sentenceEl.appendChild(document.createTextNode(before));
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'exercise-input';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        sentenceEl.appendChild(input);
+        sentenceEl.appendChild(document.createTextNode(after ?? ''));
+        item.appendChild(sentenceEl);
+
+        if (ex.hint) {
+            const hintEl = document.createElement('div');
+            hintEl.className = 'exercise-hint';
+            hintEl.textContent = `💡 ${ex.hint}`;
+            item.appendChild(hintEl);
+        }
+
+        const feedback = document.createElement('div');
+        feedback.className = 'exercise-feedback';
+        item.appendChild(feedback);
+
+        const runCheck = () => checkExercise(item, input, feedback, ex.answer, topicId, index);
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') runCheck();
+        });
+
+        wrap.appendChild(item);
+        return runCheck;
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'exercise-actions';
+
+    const checkBtn = document.createElement('button');
+    checkBtn.type = 'button';
+    checkBtn.className = 'exercise-check-btn';
+    checkBtn.textContent = 'Перевірити всі';
+
+    const scoreEl = document.createElement('span');
+    scoreEl.className = 'exercise-score';
+
+    checkBtn.addEventListener('click', () => {
+        const correctCount = checkers.filter(runCheck => runCheck()).length;
+        scoreEl.textContent = `${correctCount} / ${checkers.length} правильно`;
+    });
+
+    actions.appendChild(checkBtn);
+    actions.appendChild(scoreEl);
+    wrap.appendChild(actions);
+
+    return wrap;
+}
+
+function buildGrammarCard(topic) {
+    const card = document.createElement('details');
+    card.className = 'grammar-card';
+    if (topic.id) card.dataset.topicId = topic.id;
+
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span class="grammar-icon">${topic.icon || '📘'}</span><span>${topic.title}</span>`;
+    card.appendChild(summary);
+
+    const body = document.createElement('div');
+    body.className = 'grammar-body';
+
+    const p = document.createElement('p');
+    p.className = 'grammar-summary';
+    p.textContent = topic.summary;
+    body.appendChild(p);
+
+    if (topic.rules?.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'grammar-rules';
+        topic.rules.forEach(rule => {
+            const li = document.createElement('li');
+            li.textContent = rule;
+            ul.appendChild(li);
+        });
+        body.appendChild(ul);
+    }
+
+    if (topic.groups?.length) {
+        const grid = document.createElement('div');
+        grid.className = 'grammar-groups';
+        topic.groups.forEach(group => {
+            const item = document.createElement('div');
+            item.className = 'grammar-group';
+            item.innerHTML = `<strong>${group.name}</strong><span class="grammar-group-words">${group.words}</span><em class="grammar-group-example">${group.example}</em>`;
+            grid.appendChild(item);
+        });
+        body.appendChild(grid);
+    }
+
+    if (topic.examples?.length) {
+        const exWrap = document.createElement('div');
+        exWrap.className = 'grammar-examples';
+        topic.examples.forEach(ex => {
+            const exEl = document.createElement('div');
+            exEl.className = 'grammar-example';
+            exEl.innerHTML = `<span class="ex-en">${ex.en}</span><span class="ex-uk">${ex.uk}</span>`;
+            exWrap.appendChild(exEl);
+        });
+        body.appendChild(exWrap);
+    }
+
+    if (topic.note) {
+        const note = document.createElement('div');
+        note.className = 'grammar-note';
+        const noteTitle = document.createElement('strong');
+        noteTitle.textContent = topic.note.title;
+        note.appendChild(noteTitle);
+        const noteList = document.createElement('ul');
+        topic.note.items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            noteList.appendChild(li);
+        });
+        note.appendChild(noteList);
+        body.appendChild(note);
+    }
+
+    if (topic.exercises?.length) {
+        body.appendChild(buildExerciseBlock(topic.exercises, topic.id));
+    }
+
+    if (topic.category) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'grammar-practice-btn';
+        btn.textContent = 'Практикувати ці слова →';
+        btn.addEventListener('click', () => {
+            currentCategoryKey = topic.category;
+            renderCategoryChips();
+            loadWords();
+            switchTab('practice');
+        });
+        body.appendChild(btn);
+    }
+
+    if (topic.refPage) {
+        const link = document.createElement('a');
+        link.className = 'grammar-ref-link';
+        link.href = `grammar-b2/${topic.refPage}`;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'Докладніше: формули й таймлайни →';
+        body.appendChild(link);
+    }
+
+    card.appendChild(body);
+    return card;
+}
+
+function findGrammarTopicById(id) {
+    return grammarTopics.find(t => t.id === id) || grammarB2Topics.find(t => t.id === id);
+}
+
+function openGrammarTopic(topicId) {
+    switchTab('grammar');
+    requestAnimationFrame(() => {
+        const card = grammarListEl.querySelector(`[data-topic-id="${topicId}"]`);
+        if (card) {
+            card.open = true;
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+}
+
+function getTopicStatus(topic) {
+    const total = topic.exercises?.length || 0;
+    if (!total) return { correct: 0, attempted: 0, total: 0, status: 'none' };
+    const stats = getTopicExerciseStats(topic.id, total);
+    const status = stats.correct === total ? 'mastered' : stats.attempted > 0 ? 'in-progress' : 'not-started';
+    return { ...stats, status };
+}
+
+function buildRoadmapContent(container) {
+    container.innerHTML = '';
+
+    const allIds = GRAMMAR_ROADMAP.flatMap(s => s.topicIds);
+    const masteredCount = allIds.filter(id => {
+        const t = findGrammarTopicById(id);
+        return t && getTopicStatus(t).status === 'mastered';
+    }).length;
+    const percent = Math.round((masteredCount / allIds.length) * 100);
+
+    const summary = document.createElement('div');
+    summary.className = 'roadmap-summary';
+    summary.innerHTML = `
+        <div class="roadmap-summary-title">Роадмап граматики B2</div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${percent}%"></div></div>
+        <div class="roadmap-summary-meta">${masteredCount} / ${allIds.length} тем опановано (усі вправи правильно)</div>
+    `;
+    container.appendChild(summary);
+
+    GRAMMAR_ROADMAP.forEach(stage => {
+        const stageEl = document.createElement('div');
+        stageEl.className = 'roadmap-stage';
+
+        const stageTitle = document.createElement('div');
+        stageTitle.className = 'roadmap-stage-title';
+        stageTitle.textContent = stage.stage;
+        stageEl.appendChild(stageTitle);
+
+        const path = document.createElement('div');
+        path.className = 'roadmap-path';
+
+        stage.topicIds.forEach(id => {
+            const topic = findGrammarTopicById(id);
+            if (!topic) return;
+            const info = getTopicStatus(topic);
+            const dot = info.status === 'mastered' ? '✓' : info.status === 'in-progress' ? '◐' : '○';
+
+            const node = document.createElement('button');
+            node.type = 'button';
+            node.className = `roadmap-node roadmap-node--${info.status}`;
+            node.innerHTML = `
+                <span class="roadmap-node-dot">${dot}</span>
+                <span class="roadmap-node-icon">${topic.icon || '📘'}</span>
+                <span class="roadmap-node-title">${topic.title}</span>
+                ${info.total ? `<span class="roadmap-node-score">${info.correct}/${info.total}</span>` : ''}
+            `;
+            node.addEventListener('click', () => openGrammarTopic(id));
+            path.appendChild(node);
+        });
+
+        stageEl.appendChild(path);
+        container.appendChild(stageEl);
+    });
+}
+
+function refreshRoadmap() {
+    const roadmap = document.getElementById('grammarRoadmap');
+    if (roadmap) buildRoadmapContent(roadmap);
+}
+
+function renderGrammar() {
+    grammarListEl.innerHTML = '';
+
+    const addGroupHeading = text => {
+        const heading = document.createElement('div');
+        heading.className = 'grammar-group-heading';
+        heading.textContent = text;
+        grammarListEl.appendChild(heading);
+    };
+
+    addGroupHeading('Лексика та основи');
+    grammarTopics.forEach(topic => grammarListEl.appendChild(buildGrammarCard(topic)));
+
+    addGroupHeading('Граматика B2');
+    const roadmap = document.createElement('div');
+    roadmap.className = 'roadmap';
+    roadmap.id = 'grammarRoadmap';
+    grammarListEl.appendChild(roadmap);
+    buildRoadmapContent(roadmap);
+
+    grammarB2Topics.forEach(topic => grammarListEl.appendChild(buildGrammarCard(topic)));
+}
+
+function pluralDays(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'день';
+    if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'дні';
+    return 'днів';
+}
+
+function renderProgress() {
+    progressListEl.innerHTML = '';
+
+    const streak = srs.getStreak();
+    const streakCard = document.createElement('div');
+    streakCard.className = 'progress-card progress-card--streak';
+    streakCard.innerHTML = `
+        <div class="progress-card-title">Серія днів практики</div>
+        <div class="progress-streak-value">🔥 ${streak.count} ${pluralDays(streak.count)}</div>
+    `;
+    progressListEl.appendChild(streakCard);
+
+    Object.keys(vocabulary).forEach(key => {
+        const pool = buildPool(key);
+        const stats = srs.getCategoryStats(pool);
+        const percent = stats.total ? Math.round((stats.mastered / stats.total) * 100) : 0;
+
+        const card = document.createElement('div');
+        card.className = 'progress-card';
+        card.innerHTML = `
+            <div class="progress-card-title">${categoryLabels[key] || key}</div>
+            <div class="progress-bar"><div class="progress-bar-fill" style="width:${percent}%"></div></div>
+            <div class="progress-card-meta">
+                <span>${stats.mastered} / ${stats.total} вивчено</span>
+                <span class="progress-due">${stats.due} на повторення</span>
+            </div>
+        `;
+        progressListEl.appendChild(card);
+    });
+}
+
+function loadPlanProgress() {
+    try {
+        return JSON.parse(localStorage.getItem(PLAN_PROGRESS_KEY)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function savePlanProgress(progress) {
+    try {
+        localStorage.setItem(PLAN_PROGRESS_KEY, JSON.stringify(progress));
+    } catch {
+        // localStorage unavailable - progress just won't persist
+    }
+}
+
+function goToPlanTask(task) {
+    if (task.type === 'practice') {
+        currentCategoryKey = task.categoryKey;
+        renderCategoryChips();
+        loadWords();
+        switchTab('practice');
+    } else if (task.type === 'grammar') {
+        openGrammarTopic(task.topicId);
+    } else if (task.type === 'tab') {
+        switchTab(task.target);
+    }
+}
+
+function renderPlan() {
+    planListEl.innerHTML = '';
+
+    const progress = loadPlanProgress();
+    const doneCount = studyPlan.filter(d => progress[d.day]).length;
+    const percent = Math.round((doneCount / studyPlan.length) * 100);
+
+    const summary = document.createElement('div');
+    summary.className = 'plan-summary';
+    summary.innerHTML = `
+        <div class="plan-summary-title">План на 15 днів</div>
+        <div class="progress-bar"><div class="progress-bar-fill" style="width:${percent}%"></div></div>
+        <div class="plan-summary-meta">${doneCount} / ${studyPlan.length} днів виконано</div>
+    `;
+    planListEl.appendChild(summary);
+
+    studyPlan.forEach(dayPlan => {
+        const isDone = !!progress[dayPlan.day];
+
+        const card = document.createElement('div');
+        card.className = `plan-day${isDone ? ' plan-day-done' : ''}`;
+
+        const header = document.createElement('div');
+        header.className = 'plan-day-header';
+
+        const label = document.createElement('label');
+        label.className = 'plan-day-check';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isDone;
+        checkbox.addEventListener('change', () => {
+            const p = loadPlanProgress();
+            p[dayPlan.day] = checkbox.checked;
+            savePlanProgress(p);
+            renderPlan();
+        });
+
+        const num = document.createElement('span');
+        num.className = 'plan-day-number';
+        num.textContent = `День ${dayPlan.day}`;
+
+        label.appendChild(checkbox);
+        label.appendChild(num);
+        header.appendChild(label);
+
+        const title = document.createElement('div');
+        title.className = 'plan-day-title';
+        title.textContent = dayPlan.title;
+        header.appendChild(title);
+
+        card.appendChild(header);
+
+        if (dayPlan.focus) {
+            const focus = document.createElement('div');
+            focus.className = 'plan-day-focus';
+            focus.textContent = dayPlan.focus;
+            card.appendChild(focus);
+        }
+
+        const tasks = document.createElement('div');
+        tasks.className = 'plan-day-tasks';
+        dayPlan.tasks.forEach(task => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'plan-task-btn';
+            btn.textContent = task.label;
+            btn.addEventListener('click', () => goToPlanTask(task));
+            tasks.appendChild(btn);
+        });
+        card.appendChild(tasks);
+
+        planListEl.appendChild(card);
+    });
+}
+
+function initComponents() {
+    wireTheme();
+    renderCategoryChips();
+    wireModeToggle();
+    wireTabs();
+    renderGrammar();
+    loadWords();
+}
+
+initComponents();
