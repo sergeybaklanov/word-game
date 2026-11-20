@@ -1013,4 +1013,8 @@ main {
   .callout.err  { background: #2e1d15; }
   .gap-header   { background: #231f17; }
   .gap-num      { background: #332e24; }
+  nav.sidebar   { background: #1c1a16; }
+  .formula      { background: #1c1a16; }
+  .gap          { background: #1c1a16; }
+  .index-hero   { background: #1c1a16; }
 }
