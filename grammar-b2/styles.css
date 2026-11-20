@@ -34,15 +34,6 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .ex-table tbody tr:nth-child(even) { background: #28231a; }
-  .callout.warn { background: #332c14; }
-  .callout.info { background: #16222c; }
-  .callout.tip  { background: #16261f; }
-  .callout.err  { background: #2e1d15; }
-  .gap-header   { background: #231f17; }
-}
-
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1012,4 +1003,14 @@ main {
   .page-header h1 { font-size: 22px; }
   .section-title { font-size: 20px; }
   .ex-table-wrap { margin: 0 -18px; border-radius: 0; border-left: none; border-right: none; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ex-table tbody tr:nth-child(even) { background: #28231a; }
+  .callout.warn { background: #332c14; }
+  .callout.info { background: #16222c; }
+  .callout.tip  { background: #16261f; }
+  .callout.err  { background: #2e1d15; }
+  .gap-header   { background: #231f17; }
+  .gap-num      { background: #332e24; }
 }
